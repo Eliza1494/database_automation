@@ -812,7 +812,7 @@ following NAICS industries:
     
     </ins>
     
-    the NAICS code specified and the number of page to start
+     - the NAICS code specified and the number of page to start
     downloading. Loop explained:
     
       - tp is the last page
