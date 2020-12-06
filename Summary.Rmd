@@ -1,0 +1,288 @@
+---
+output: github_document 
+always_allow_html: yes
+    
+---
+
+```{r setup, include=FALSE}
+
+library("foreach")
+library(kableExtra)
+library(tidyverse)
+library(data.table)
+library(tidyr)
+#Item 2: In Google drive, best methods to run RScripts both in Rstudio/terminal in background: https://docs.google.com/document/d/1Ai4zWsAd6t0q-u9FmUvo0HGJr6Fcm34bu8Md-aQjHqg/edit?usp=sharing
+
+#3  setting up system for consistent loading      .libPaths("/home/neal/rpack")
+
+#item 4... downlad, unzip and start to process raw 5500 data, or other files
+
+library(data.table)
+
+#note creating data table, downloading, and unzipping in one line..for linux/mac
+#dt <- fread("curl http:etc | funzip")
+
+#alternative is download.file
+#download.file("http://askebsa.dol.gov/FOIA%20Files/2018/Latest/F_5500_2018_Latest.zip?_ga=2.238250440.950943228.1579572691-826666608.1579572691", dest="dataset.zip", mode="wb") 
+#unzip ("dataset.zip", exdir = "./")
+
+
+#unzip files as sent in email
+library(kableExtra)
+```
+
+**TX Franchise Data and 5500 Datasets**
+
+<span style="text-decoration:underline">Objective:</span> to automate the downloading process of TX Franchise Data, 5500 and 5500 SF. Filter only companies and requested information and combine both data sets and NAISC codes. 
+
+&nbsp;
+
+
+**Folder TXFranchise_5500Data:** 
+
+Automate the downloading process and download all the files available on the dol.gov website: (AutomateDownloading_5500&TX.R). If the files are zip, unzip them in the loop. Afterwards, keep only columns that contain useful information, replace missing number of participants in the TX Franchise data with 0, and keep only the companies that have business code available. Observe that the first 3 digits of the business code map with the main NAICS code. Download dataset that contains all NAICS codes and descriptions. Afterwards, match (join) the NAICS codes and descriptions with the company data using strings and left join on the first 3 numbers.  
+
+Take the number of plan participants as a rough approximation of the number of employees in the company, and hence, its size. Compute maximum, minimum and mean of the participants for each of the datasets. Compute aggregate statistics of number of participants for each business code. The tables below are computed using the TX Franchise 2018 data. 
+
+&nbsp;
+
+
+```{r,warning=FALSE, comment=FALSE, message=FALSE,echo=FALSE}
+setwd("C:/Users/Eliza/Documents")
+
+#read datasets
+f1 <- fread("f_5500_2018_latest.csv")
+f2 <- fread("f_5500_sf_2018_latest.csv")
+
+#setDT(f1)
+
+#setDT(f2)
+
+filt <- f1[,c(2,19,24:26,46,71)]
+#filt2 <- f2[,c(2,19,22:26,46,71:72)] #add 17
+filt2 <- f2[,c(2,17,21:23,32,51)] #add 17
+
+
+filt <- data.frame(filt,stringsAsFactors = F)
+filt2 <- data.frame(filt2,stringsAsFactors = F)
+
+names(filt)=c("Begin Date","CompanyName","US_City","US_State","US_ZIP",
+              "Business_Code", "Number_Of_Participants")
+names(filt2)=names(filt)
+
+
+
+#delete duplicated rows
+filt=unique(filt)
+filt2=unique(filt2)
+
+#####Created#######
+filt <- filt %>% 
+  replace_na(list(Number_Of_Participants=0))
+filtNoNa <- filt[!is.na(filt$Business_Code),]
+#Check nrow(filt) - nrow(filtNoNa) = nrow(filtNA) only Business Code has NA values
+
+#fwrite(TX5500Industries_UniqueComp, "TX5500Industries_UniqueComp.csv") to be used to create the final file
+
+filt2 <- filt2 %>% 
+  replace_na(list(Number_Of_Participants=0))
+filt2NA <- filt2[is.na(filt2$Business_Code),]
+filt2NoNa <- filt2[!is.na(filt2$Business_Code),]
+
+
+#########################
+
+#keep only one row per company name,select the maximun for each group
+#if we have the maximun in more than one row, we keep the first(head), 
+
+
+#created
+filterGroup2 = filt %>% replace_na(list(Number_Of_Participants=0))%>% 
+  group_by(CompanyName,Business_Code)
+#
+
+#created
+filtMNoSlice=filt %>% replace_na(list(Number_Of_Participants=0))%>% 
+  group_by(CompanyName,Business_Code)%>%
+  filter(Number_Of_Participants==max(Number_Of_Participants))
+#
+
+filtMNoSlice2=filt %>% replace_na(list(Number_Of_Participants=0))%>% 
+  group_by(CompanyName)%>%
+  filter(Number_Of_Participants==max(Number_Of_Participants) & US_State == "TX")
+
+
+filtMNoSlice2 <- as.data.frame(filtMNoSlice2)
+filtMNoSlice2 <- filtMNoSlice2[order(filtMNoSlice2$Number_Of_Participants, decreasing = TRUE),]
+n <- head(filtMNoSlice2)
+n <- n[,- c(1,5)]
+
+kable(n, caption = "Top 10 TX Companies with max participants", align = "l") %>%
+  kable_styling(latex_options = c("striped", "scale_down"))
+
+```
+
+
+&nbsp;
+
+
+```{r,warning=FALSE, comment=FALSE, message=FALSE,echo=FALSE}
+filtM=filt %>% replace_na(list(Number_Of_Participants=0))%>% 
+  group_by(Business_Code)%>%
+  filter(Number_Of_Participants==max(Number_Of_Participants))
+
+
+filtMtop50 <- filtM[order(-filtM$Number_Of_Participants),]
+filtMtop50 <- filtMtop50[1:50, ]
+filtMLess50 <- filtM[filtM$Number_Of_Participants < 50,]
+filtMbw10_50 <- filtM[between(filtM$Number_Of_Participants, 10,50),]
+filtMbw872_210572 <- filtM[between(filtM$Number_Of_Participants, 872, 210572),]
+
+filtMEmplbyBusinessCode <- filtM[,colnames(filtM) %in% c("Business_Code", "Number_Of_Participants")]
+
+m <- filtMEmplbyBusinessCode %>%
+  group_by(Business_Code) %>%
+  summarise(Mean_Participants = round(mean(Number_Of_Participants)), Total_Participants = sum(Number_Of_Participants), Max_Participants = max(Number_Of_Participants))
+
+m <- m[order(m$Total_Participants, decreasing = TRUE),]
+
+m <- m[1:10,]
+
+kable(m, caption = "Max Participants in each Business Code for US", align = "l") %>%
+  kable_styling(latex_options = c("striped", "scale_down"))
+
+```
+
+
+&nbsp;
+
+
+Join the data tables from Texas Franchise 2017 and 2018 to see which companies are in both datasets. Create a unique ID by removing all punctuation from the company name and concatenating the company name with EIN column. Since some companies have common EIN, I cannot use it as a unique identifier. (MergingDataTables5500_17and18.R)
+
+To come to the final data tables that should be used, please look at CompOfInterest_5500DataSF_TXFranchise.R and CompOfInt_5500Data_TXFranchise.R. 
+
+Start with the 5500 data table: only the informative columns are kept and if active participants at both BOY and EOY are missing these companies are removed from the table. Only companies that have EOY participants higher than 10 are kept. In addition, companies that have not provided business codes are removed as well. Used grepl to extract the first 2/3 digits of the Business Code in order to group to filter only these companies that are in the industries of interest.
+
+Afterwards, clean again the TX Franchise table by using the same procedure to keep only the business codes and states of interest. 
+
+For both TX FRanchise and 5500, remove the punctuation and additional space from the companies name and join the tables on company name.Observe which companies are in TX Franchise but not in 5500 using anti join. 
+
+&nbsp;
+
+
+**Folders in the drive and explanations:**
+
+&nbsp;
+
+
+1. <span style="text-decoration:underline">CompOf_Int_SF_FilteredByBC: companies of the 5500 SF dataset filtered by:</span>
+
+    *	Companies that are in the following business codes: BC start with 238: (Specialty Trade Contractors); BC that start with 31, 32, or 33 (Manufacturing); BC that start with 42 (Wholesale Trade); BC that start with 51 (Information); BC that start with 48 (Transportation); BC that start with 5413 (Architecture/engineer services); BC that start with 56 (Administrative/Support); BC Health and Food/drinking places; BC that start with "811" (Repair and Maintenance); 
+    *	Companies that have more than 10 active participants as of end of year 
+    *	Companies that are in TX, OK, TN, NC, SC, AL, GA
+    * CompOfInterest_5500DataSF_TXFranchise.R: 1 to 76 
+
+&nbsp;
+
+
+2. <span style="text-decoration:underline">InBoth_TXFranch_5500SF_ByBCs:</span> companies that are in both 5500 SF dataset and TX franchise: (5115 observations that are in both 5500 and Texas franchise and 4914 unique company names)
+
+    *	Same conditions as above 
+    *	Only active companies 
+    *	No nonprofit companies 
+    *	CompOfInterest_5500DataSF_TXFranchise.R script: 80 to 111
+
+&nbsp;
+
+
+3. <span style="text-decoration:underline">Comp_TXFranch_NotIn5500SF_BCs:</span> companies that are in the TX franchise data but not in the 5500 SF data: 
+
+    *	CompOfInterest_5500DataSF_TXFranchise.R: 115 and 116
+    *	Keep only these companies from the dataset that have no matches with the 5500 but have the same specific business codes as in the 5500 SF data; (in the R script 112 to 165);  CompOfInterest_5500DataSF_TXFranchise.R: 115 and 116
+
+
+&nbsp;
+
+
+CompOfInterest_5500DataSF_TXFranchise.R script: from 172 to 227 are the lines to create file for each of the business codes to be used for the DoRock.
+
+
+Same process for the 5500 dataset and the TX franchise. CompOfInt_5500Data_TXFranchise.R. It is mainly the same codes and process as CompOfInterest_5500DataSF_TXFranchise.R but names of the data tables are changed and any other differences between 5500 and 5500 SF are accounted for. 
+
+
+&nbsp;
+
+
+**ReferenceUSA**
+
+RScript: RefUSA_L (1).R
+
+Extract data for companies in the states of interest and in the following NAICS industries: 
+    
+    *	Specialty Trade Contractors (“238”)
+  *	Manufacturing (“31”, “32”, “33”)
+  *	Wholesale Trade (“42”)
+  *	Information (“51”)
+  *	Transportation (“48”)
+  *	Architecture/Engineering (“5413”)
+  *	Administration and Support (“561”)
+  *	Healthcare/Laboratories (“6215”, “6216”)
+  *	Food/Drinking Places (“7223”)
+  *	Repair/Maintenance (“811”)
+  *	Downloaded info for OK, TN, AL, GA about companies in the same NAICS codes. 
+  *	Merge all the data extracted and create tables for each of the business codes, and remove the unnecessary columns 
+  *	Filter out companies that have website from companies that do not
+  *Predict emails based on the most used email formats for the companies that have websites and then verify using email verifier 
+
+&nbsp;
+
+
+1. <span style="text-decoration:underline">Specified options in the code:</span>
+
+    * NAICS primary codes
+    *	States 
+    *	Number of Employees: 5-9; 10-19; 20-49; 50-99; 100-249; 250-499; 500-999
+    *	Only Privately Owned Companies 
+
+
+&nbsp;
+
+
+2. <span style="text-decoration:underline">code ← “811” and i_st ← 1: </span>	the NAICS code specified and the number of page to start downloading. Loop explained:
+
+    *	tp is the last page 
+    *	n takes the total number of pages and makes a sequence by 10 (if tp=89 then n will be "1"  "11" "21" "31" "41" "51" "61" "71" "81")
+    *	because the total number of pages may not be a multiple of 10, it needs to be accounted for the last number of n because 81+10 is not 89 so the loop goes only till 71: (71+10) and there is another line of codes that accounts only for the last couple of pages which are always less than or equal to 10. 
+    *	ed is the position of the last number of the sequence so ed=9 and n[ed] = 81
+    *	pl is the position before last so in this case pl is 8 and the loop will go for 8 times so the loop goes i = i_st:(pl)
+    *	for each i, it clicks the checkbox and the arrow to go forward so 10 times. checkbox is the function to do that and it does it for each i so for 1st page it will click the checkbox than the arrow until it hits 11 so total of 10 times to get 250 companies; then it will go to download, detailed and will download it; 
+    *	in the R script 115 to 199 
+
+
+&nbsp;
+
+
+3. <span style="text-decoration:underline">Extracting information from the last page: </span> 
+
+    *	It takes the length of n: ed which is the last position (n[ed] = 81) and it subtracts the total pages (89) from n[ed] = 81 so in this case that will be 8 times to check the box and click the arrow for next; so using the checkbox function 8 times instead of 10 as in the loop. 
+
+&nbsp;
+
+  
+4. <span style="text-decoration:underline">Predict Emails for companies missing email information but contain website info: </span> 
+
+    * EmailGuess.R
+    *	Follow the formats: first_initial last: jdoe@friedmanllp.com and first last names	 janedoe@friedmanllp.com	
+    *	Observe the executives are ranked based on importance, therefore, keep only the first and last names of the first 5 executives
+    *	Extract only the first initial of the first name and concatenate with the last name, adding “@” and the website at the end, make the email all lowercase 
+    *	Concatenate the first and last names of the executives, together with “@” and the website, make the email lowercase 
+    *	Do the last 2 steps for each of the five executives and for each company in the data table 
+    *	Use the email verifier provider to verify emails
+
+
+
+
+
+
+
+
