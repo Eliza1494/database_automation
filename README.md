@@ -1,6 +1,6 @@
 **TX Franchise Data and 5500 Datasets**
 
-<span style="text-decoration:underline">Objective:</span> to automate
+<ins>Objective:</ins> to automate
 the downloading process of TX Franchise Data, 5500 and 5500 SF. Filter
 only companies and requested information and combine both data sets and
 NAISC codes.
