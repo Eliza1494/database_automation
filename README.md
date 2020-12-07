@@ -6,9 +6,128 @@ Objective:
 
 </ins>
 
-to automate the downloading process of TX Franchise Data, 5500 and 5500
-SF. Filter only companies and requested information and combine both
+to automate the downloading process of TX Franchise Data, 5500, 5500
+SF and ReferenceUSA. Filter only companies and requested information and combine both
 data sets and NAISC codes.
+
+**ReferenceUSA**
+
+Automated the extraction of data from ReferenceUSA using RSelenium. 
+
+RScript: RefUSA\_L (1).R
+
+Extract data for companies in the states of interest and in the
+following NAICS industries:
+
+  - Specialty Trade Contractors (“238”)
+  - Manufacturing (“31”, “32”, “33”)
+  - Wholesale Trade (“42”)
+  - Information (“51”)
+  - Transportation (“48”)
+  - Architecture/Engineering (“5413”)
+  - Administration and Support (“561”)
+  - Healthcare/Laboratories (“6215”, “6216”)
+  - Food/Drinking Places (“7223”)
+  - Repair/Maintenance (“811”)
+  - Downloaded info for OK, TN, AL, GA about companies in the same NAICS
+    codes.
+  - Merge all the data extracted and create tables for each of the
+    business codes, and remove the unnecessary columns
+  - Filter out companies that have website from companies that do not
+    \*Predict emails based on the most used email formats for the
+    companies that have websites and then verify using email verifier
+
+ 
+
+1.  
+    
+    <ins>
+    
+    Specified options in the code:
+    
+    </ins>
+    
+      - NAICS primary codes
+      - States
+      - Number of Employees: 5-9; 10-19; 20-49; 50-99; 100-249; 250-499;
+        500-999
+      - Only Privately Owned Companies
+
+ 
+
+2.  
+    
+    <ins>
+    
+    code ← “811” and i\_st ← 1:
+    
+    </ins>
+    
+   - the NAICS code specified and the number of page to start
+    downloading. Loop explained:
+    
+      - tp is the last page
+      - n takes the total number of pages and makes a sequence by 10 (if
+        tp=89 then n will be “1” “11” “21” “31” “41” “51” “61” “71”
+        “81”)
+      - because the total number of pages may not be a multiple of 10,
+        it needs to be accounted for the last number of n because 81+10
+        is not 89 so the loop goes only till 71: (71+10) and there is
+        another line of codes that accounts only for the last couple of
+        pages which are always less than or equal to 10.
+      - ed is the position of the last number of the sequence so ed=9
+        and n\[ed\] = 81
+      - pl is the position before last so in this case pl is 8 and the
+        loop will go for 8 times so the loop goes i = i\_st:(pl)
+      - for each i, it clicks the checkbox and the arrow to go forward
+        so 10 times. checkbox is the function to do that and it does it
+        for each i so for 1st page it will click the checkbox than the
+        arrow until it hits 11 so total of 10 times to get 250
+        companies; then it will go to download, detailed and will
+        download it;
+      - in the R script 115 to 199
+
+ 
+
+3.  
+    
+    <ins>
+    
+    Extracting information from the last page:
+    
+    </ins>
+    
+      - It takes the length of n: ed which is the last position (n\[ed\]
+        = 81) and it subtracts the total pages (89) from n\[ed\] = 81 so
+        in this case that will be 8 times to check the box and click the
+        arrow for next; so using the checkbox function 8 times instead
+        of 10 as in the loop.
+
+ 
+
+4.  
+    
+    <ins>
+    
+    Predict Emails for companies missing email information but contain
+    website info:
+    
+    </ins>
+    
+      - EmailGuess.R
+      - Follow the formats: first\_initial last: <jdoe@friedmanllp.com>
+        and first last names <janedoe@friedmanllp.com>  
+      - Observe the executives are ranked based on importance,
+        therefore, keep only the first and last names of the first 5
+        executives
+      - Extract only the first initial of the first name and concatenate
+        with the last name, adding “@” and the website at the end, make
+        the email all lowercase
+      - Concatenate the first and last names of the executives, together
+        with “@” and the website, make the email lowercase
+      - Do the last 2 steps for each of the five executives and for each
+        company in the data table
+      - Use the email verifier provider to verify emails
 
  
 
@@ -760,121 +879,4 @@ data tables are changed and any other differences between 5500 and 5500
 SF are accounted for.
 
  
-
-**ReferenceUSA**
-
-RScript: RefUSA\_L (1).R
-
-Extract data for companies in the states of interest and in the
-following NAICS industries:
-
-  - Specialty Trade Contractors (“238”)
-  - Manufacturing (“31”, “32”, “33”)
-  - Wholesale Trade (“42”)
-  - Information (“51”)
-  - Transportation (“48”)
-  - Architecture/Engineering (“5413”)
-  - Administration and Support (“561”)
-  - Healthcare/Laboratories (“6215”, “6216”)
-  - Food/Drinking Places (“7223”)
-  - Repair/Maintenance (“811”)
-  - Downloaded info for OK, TN, AL, GA about companies in the same NAICS
-    codes.
-  - Merge all the data extracted and create tables for each of the
-    business codes, and remove the unnecessary columns
-  - Filter out companies that have website from companies that do not
-    \*Predict emails based on the most used email formats for the
-    companies that have websites and then verify using email verifier
-
- 
-
-1.  
-    
-    <ins>
-    
-    Specified options in the code:
-    
-    </ins>
-    
-      - NAICS primary codes
-      - States
-      - Number of Employees: 5-9; 10-19; 20-49; 50-99; 100-249; 250-499;
-        500-999
-      - Only Privately Owned Companies
-
- 
-
-2.  
-    
-    <ins>
-    
-    code ← “811” and i\_st ← 1:
-    
-    </ins>
-    
-   - the NAICS code specified and the number of page to start
-    downloading. Loop explained:
-    
-      - tp is the last page
-      - n takes the total number of pages and makes a sequence by 10 (if
-        tp=89 then n will be “1” “11” “21” “31” “41” “51” “61” “71”
-        “81”)
-      - because the total number of pages may not be a multiple of 10,
-        it needs to be accounted for the last number of n because 81+10
-        is not 89 so the loop goes only till 71: (71+10) and there is
-        another line of codes that accounts only for the last couple of
-        pages which are always less than or equal to 10.
-      - ed is the position of the last number of the sequence so ed=9
-        and n\[ed\] = 81
-      - pl is the position before last so in this case pl is 8 and the
-        loop will go for 8 times so the loop goes i = i\_st:(pl)
-      - for each i, it clicks the checkbox and the arrow to go forward
-        so 10 times. checkbox is the function to do that and it does it
-        for each i so for 1st page it will click the checkbox than the
-        arrow until it hits 11 so total of 10 times to get 250
-        companies; then it will go to download, detailed and will
-        download it;
-      - in the R script 115 to 199
-
- 
-
-3.  
-    
-    <ins>
-    
-    Extracting information from the last page:
-    
-    </ins>
-    
-      - It takes the length of n: ed which is the last position (n\[ed\]
-        = 81) and it subtracts the total pages (89) from n\[ed\] = 81 so
-        in this case that will be 8 times to check the box and click the
-        arrow for next; so using the checkbox function 8 times instead
-        of 10 as in the loop.
-
- 
-
-4.  
-    
-    <ins>
-    
-    Predict Emails for companies missing email information but contain
-    website info:
-    
-    </ins>
-    
-      - EmailGuess.R
-      - Follow the formats: first\_initial last: <jdoe@friedmanllp.com>
-        and first last names <janedoe@friedmanllp.com>  
-      - Observe the executives are ranked based on importance,
-        therefore, keep only the first and last names of the first 5
-        executives
-      - Extract only the first initial of the first name and concatenate
-        with the last name, adding “@” and the website at the end, make
-        the email all lowercase
-      - Concatenate the first and last names of the executives, together
-        with “@” and the website, make the email lowercase
-      - Do the last 2 steps for each of the five executives and for each
-        company in the data table
-      - Use the email verifier provider to verify emails
 
