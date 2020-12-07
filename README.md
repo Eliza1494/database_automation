@@ -10,7 +10,7 @@ Objective:
 To automate the extraction of data from ReferenceUSA using RSelenium, clean the
 the extracted information, predict emails and verify them. 
 
-RScript: RefUSA\_L (1).R
+RScript: RefUSA\_L (1).R in Automation folder
 
 Extract data for companies in the states of interest and in the
 following NAICS industries:
