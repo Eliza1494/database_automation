@@ -1,4 +1,4 @@
-**TX Franchise Data and 5500 Datasets**
+**ReferenceUSA**
 
 <ins>
 
@@ -6,13 +6,9 @@ Objective:
 
 </ins>
 
-to automate the downloading process of TX Franchise Data, 5500, 5500
-SF and ReferenceUSA. Filter only companies and requested information and combine both
-data sets and NAISC codes.
 
-**ReferenceUSA**
-
-Automated the extraction of data from ReferenceUSA using RSelenium. 
+To automate the extraction of data from ReferenceUSA using RSelenium, clean the
+the extracted information, predict emails and verify them. 
 
 RScript: RefUSA\_L (1).R
 
@@ -130,6 +126,9 @@ following NAICS industries:
       - Use the email verifier provider to verify emails
 
  
+
+**TX Franchise Data and 5500 Datasets**
+
 
 **Folder TXFranchise\_5500Data:**
 
