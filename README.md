@@ -26,9 +26,11 @@ following NAICS industries:
   - Food/Drinking Places (“7223”)
   - Repair/Maintenance (“811”)
   
-  
-  - Download info for OK, TN, AL, GA about companies in the same NAICS
-    codes.
+&nbsp;
+
+
+Download info for OK, TN, AL, GA about companies in the same NAICS
+codes.
   - Merge all the data extracted and create tables for each of the
     business codes, and remove the unnecessary columns
   - Filter out companies that have website from companies that do not
