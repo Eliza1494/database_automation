@@ -11,18 +11,18 @@ library(chromote)
 #devtools::install_github("rstudio/chromote")
 
 
+rd <- rsDriver(browser="chrome",chromever = "87.0.4280.88", port=4598L)
+
+#--disable-background-networking 
+#--disable-background-timer-throttling --disable-breakpad --disable-client-side-phishing-detection --disable-default-apps
+#--disable-dev-shm-usage --disable-extensions --safebrowsing-disable-auto-update
+
+remDr <- rd$client
+remDr$navigate("https://www.duckduckgo.com")
+
+
 code <- "561"
 State <- "North Carolina"
-
-
-#clear port 4567
-#system("kill -9 $(lsof -t -i:4558 -sTCP:LISTEN)")
-
-rD=rsDriver(port = 4691L)
-remDr =rD[["client"]]
-
-#remDr <- rd$client
-remDr$navigate("https://www.duckduckgo.com")
 
 
 #click on reference USA from the research tools
